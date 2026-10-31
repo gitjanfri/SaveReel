@@ -12,6 +12,8 @@ Se il reel non ha testo, bastano titolo + link.
 - **Priorità: Fase 1 (web app PHP)**. La Fase 2 (lettura lato server con Docker/yt-dlp) si valuta solo dopo.
 - **Hosting**: quello già esistente su DominiOK (cPanel su CloudLinux, PHP 8.x, MySQL/MariaDB, SSL gratuito, cron).
 - **Database**: MySQL già esistente, **in entrambe le fasi**.
+- **Utenti**: progettata **multiutente** fin da subito, ma per ora l'unico utente sono io.
+  Ogni reel appartiene a un utente; nessuna registrazione pubblica (gli utenti li crea l'amministratore).
 - **Un solo backend (PHP) scrive nel DB**. Tutto il resto (bookmarklet, condivisione da telefono, lettore yt-dlp)
   passa dalla sua API HTTPS con token, senza collegarsi direttamente a MySQL.
   → Il DB resta raggiungibile anche quando si aggiungerà la Fase 2, ovunque giri il lettore.
@@ -58,15 +60,25 @@ config.php           # credenziali DB (fuori dal document root, escluso da git)
 schema.sql
 ```
 
-Tabella `reels`: `id, url (UNIQUE, normalizzato), titolo, testo NULL, autore NULL,
-fonte ENUM('browser','server','manuale'), creato_il, aggiornato_il`.
+Tabelle:
+- `utenti`: `id, email (UNIQUE), nome, password_hash, ruolo ENUM('admin','utente'), token_api_hash, attivo, creato_il`
+- `reels`: `id, utente_id (FK utenti), url (normalizzato), titolo, testo NULL, autore NULL,
+  fonte ENUM('browser','server','manuale'), creato_il, aggiornato_il` — `UNIQUE(utente_id, url)`:
+  lo stesso reel può essere salvato da utenti diversi, ma non duplicato dallo stesso utente.
+
+Multiutente in pratica:
+- Ogni utente vede/esporta solo i propri reel; il token del bookmarklet è personale (salvato come hash, rigenerabile).
+- Password con `password_hash()`; sessioni sicure (cookie HttpOnly/Secure), protezione CSRF sui form.
+- Per ora un solo utente admin creato con uno script/SQL iniziale; pagina di gestione utenti più avanti.
 
 ### TODO
 - [ ] Verificare in cPanel: versione PHP attiva, creazione nuovo DB MySQL e utente, sottodominio
-- [ ] Decidere se l'app è solo per me o multiutente (impatta il login)
+- [x] Decidere se l'app è solo per me o multiutente → multiutente, per ora solo io
 - [ ] Ambiente di sviluppo locale con Docker compose (php:8.3-apache + mariadb) che replica l'hosting
 - [ ] `schema.sql` + connessione PDO + `config.php` fuori dal document root
-- [ ] Login + token personale per il bookmarklet
+- [ ] Tabella `utenti` + script di creazione del primo utente admin
+- [ ] Login + token personale per il bookmarklet (ogni utente vede solo i propri reel)
+- [ ] (più avanti) Pagina admin per creare/disattivare utenti
 - [ ] API `POST/GET /api/reels` con normalizzazione URL (nessun duplicato: risalvare aggiorna)
 - [ ] Pagina di conferma con anteprima modificabile
 - [ ] Elenco reel salvati, ricerca, export .txt/.csv
