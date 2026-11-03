@@ -12,7 +12,7 @@ function utente_corrente(): ?array
     $utente = null;
     $id = $_SESSION['utente_id'] ?? null;
     if ($id) {
-        $st = db()->prepare('SELECT id, email, nome, ruolo FROM utenti WHERE id = ? AND attivo = 1');
+        $st = db()->prepare('SELECT id, email, nome, ruolo, reel_per_pagina FROM utenti WHERE id = ? AND attivo = 1');
         $st->execute([$id]);
         $utente = $st->fetch() ?: null;
         if (!$utente) {

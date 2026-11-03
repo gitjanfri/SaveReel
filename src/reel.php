@@ -126,26 +126,83 @@ function pulisci_testo(string $s, int $max): string
 /** $categoriaId: null = tutte, 0 = senza categoria, >0 = quella categoria. */
 function cerca_reels(int $utenteId, string $q = '', int $limite = 50, int $offset = 0, ?int $categoriaId = null): array
 {
+    [$where, $param] = filtro_reels($utenteId, $q, $categoriaId);
     $sql = 'SELECT r.id, r.url, r.titolo, r.testo, r.autore, r.fonte, r.categoria_id, c.nome AS categoria,
             r.creato_il, r.aggiornato_il
-            FROM reels r LEFT JOIN categorie c ON c.id = r.categoria_id WHERE r.utente_id = ?';
+            FROM reels r LEFT JOIN categorie c ON c.id = r.categoria_id WHERE ' . $where
+        . ' ORDER BY r.creato_il DESC, r.id DESC LIMIT ' . max(1, $limite) . ' OFFSET ' . max(0, $offset);
+    $st = db()->prepare($sql);
+    $st->execute($param);
+    return $st->fetchAll();
+}
+
+/** Numero di reel che corrispondono agli stessi filtri di cerca_reels (per la paginazione). */
+function conta_reels(int $utenteId, string $q = '', ?int $categoriaId = null): int
+{
+    [$where, $param] = filtro_reels($utenteId, $q, $categoriaId);
+    $st = db()->prepare('SELECT COUNT(*) FROM reels r LEFT JOIN categorie c ON c.id = r.categoria_id WHERE ' . $where);
+    $st->execute($param);
+    return (int) $st->fetchColumn();
+}
+
+/** Condizione WHERE e parametri comuni a ricerca e conteggio. */
+function filtro_reels(int $utenteId, string $q, ?int $categoriaId): array
+{
+    $where = 'r.utente_id = ?';
     $param = [$utenteId];
     $q = trim($q);
     if ($q !== '') {
         $like = '%' . addcslashes($q, '%_\\') . '%';
-        $sql .= ' AND (r.titolo LIKE ? OR r.testo LIKE ? OR r.autore LIKE ? OR r.url LIKE ? OR c.nome LIKE ?)';
+        $where .= ' AND (r.titolo LIKE ? OR r.testo LIKE ? OR r.autore LIKE ? OR r.url LIKE ? OR c.nome LIKE ?)';
         array_push($param, $like, $like, $like, $like, $like);
     }
     if ($categoriaId === 0) {
-        $sql .= ' AND r.categoria_id IS NULL';
+        $where .= ' AND r.categoria_id IS NULL';
     } elseif ($categoriaId !== null) {
-        $sql .= ' AND r.categoria_id = ?';
+        $where .= ' AND r.categoria_id = ?';
         $param[] = $categoriaId;
     }
-    $sql .= ' ORDER BY r.creato_il DESC, r.id DESC LIMIT ' . max(1, $limite) . ' OFFSET ' . max(0, $offset);
-    $st = db()->prepare($sql);
-    $st->execute($param);
-    return $st->fetchAll();
+    return [$where, $param];
+}
+
+// ---- Preferenze utente ----
+
+const REEL_PER_PAGINA_SCELTE = [5, 10, 20, 50, 100];
+const REEL_PER_PAGINA_DEFAULT = 10;
+
+function reel_per_pagina(array $utente): int
+{
+    $n = (int) ($utente['reel_per_pagina'] ?? REEL_PER_PAGINA_DEFAULT);
+    return in_array($n, REEL_PER_PAGINA_SCELTE, true) ? $n : REEL_PER_PAGINA_DEFAULT;
+}
+
+function imposta_reel_per_pagina(int $utenteId, int $n): bool
+{
+    if (!in_array($n, REEL_PER_PAGINA_SCELTE, true)) {
+        return false;
+    }
+    db()->prepare('UPDATE utenti SET reel_per_pagina = ? WHERE id = ?')->execute([$n, $utenteId]);
+    return true;
+}
+
+/**
+ * Numeri di pagina da mostrare: prima, ultima e quelle vicine all'attuale; null = "…".
+ * Es. pagina 7 di 20 → [1, null, 5, 6, 7, 8, 9, null, 20]
+ */
+function pagine_da_mostrare(int $attuale, int $totale, int $vicine = 2): array
+{
+    $out = [];
+    $prec = 0;
+    for ($i = 1; $i <= $totale; $i++) {
+        if ($i === 1 || $i === $totale || abs($i - $attuale) <= $vicine) {
+            if ($prec && $i - $prec > 1) {
+                $out[] = null;
+            }
+            $out[] = $i;
+            $prec = $i;
+        }
+    }
+    return $out;
 }
 
 function trova_reel(int $utenteId, int $id): ?array

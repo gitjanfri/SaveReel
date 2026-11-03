@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS utenti (
     password_hash   VARCHAR(255) NOT NULL,
     ruolo           ENUM('admin','utente') NOT NULL DEFAULT 'utente',
     token_api_hash  CHAR(64) NULL,
+    reel_per_pagina SMALLINT UNSIGNED NOT NULL DEFAULT 10,
     attivo          TINYINT(1) NOT NULL DEFAULT 1,
     creato_il       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_utenti_email (email),

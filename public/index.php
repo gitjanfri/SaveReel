@@ -14,11 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['elimina'])) {
 
 $q = trim((string) ($_GET['q'] ?? ''));
 $cat = (isset($_GET['cat']) && $_GET['cat'] !== '') ? (int) $_GET['cat'] : null;
-$pagina = max(1, (int) ($_GET['p'] ?? 1));
-$perPagina = 50;
-$reels = cerca_reels((int) $u['id'], $q, $perPagina + 1, ($pagina - 1) * $perPagina, $cat);
-$altre = count($reels) > $perPagina;
-$reels = array_slice($reels, 0, $perPagina);
+$perPagina = reel_per_pagina($u);
+$totale = conta_reels((int) $u['id'], $q, $cat);
+$pagine = max(1, (int) ceil($totale / $perPagina));
+$pagina = min($pagine, max(1, (int) ($_GET['p'] ?? 1)));
+$reels = cerca_reels((int) $u['id'], $q, $perPagina, ($pagina - 1) * $perPagina, $cat);
 $categorie = elenco_categorie((int) $u['id']);
 
 /** Query string che conserva ricerca e categoria. */
@@ -86,10 +86,30 @@ pagina_inizio('I miei reel');
 </ul>
 <?php endif; ?>
 
-<nav class="paginazione">
-  <?php if ($pagina > 1): ?><a href="?<?= qs(['p' => $pagina - 1]) ?>">← Precedenti</a><?php endif; ?>
-  <?php if ($altre): ?><a href="?<?= qs(['p' => $pagina + 1]) ?>">Successivi →</a><?php endif; ?>
+<?php if ($totale > 0): ?>
+<nav class="paginazione" aria-label="Pagine">
+  <span class="conteggio">
+    <?= ($pagina - 1) * $perPagina + 1 ?>–<?= min($totale, $pagina * $perPagina) ?> di <?= $totale ?> reel
+    · <a href="/account.php#preferenze"><?= $perPagina ?> per pagina</a>
+  </span>
+  <?php if ($pagine > 1): ?>
+  <span class="pagine">
+    <?php if ($pagina > 1): ?>
+      <a href="?<?= qs(['p' => $pagina - 1]) ?>" class="bottone piccolo secondario" rel="prev">← Precedente</a>
+    <?php endif; ?>
+    <?php foreach (pagine_da_mostrare($pagina, $pagine) as $n): ?>
+      <?php if ($n === null): ?><span class="puntini">…</span>
+      <?php elseif ($n === $pagina): ?><span class="bottone piccolo attuale" aria-current="page"><?= $n ?></span>
+      <?php else: ?><a href="?<?= qs(['p' => $n]) ?>" class="bottone piccolo secondario"><?= $n ?></a>
+      <?php endif; ?>
+    <?php endforeach; ?>
+    <?php if ($pagina < $pagine): ?>
+      <a href="?<?= qs(['p' => $pagina + 1]) ?>" class="bottone piccolo secondario" rel="next">Successiva →</a>
+    <?php endif; ?>
+  </span>
+  <?php endif; ?>
 </nav>
+<?php endif; ?>
 <script src="<?= e(asset('elenco.js')) ?>"></script>
 <?php
 pagina_fine();

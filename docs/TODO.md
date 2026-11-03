@@ -83,6 +83,8 @@ Multiutente in pratica:
 - [x] API `POST/GET /api/reels` con normalizzazione URL (nessun duplicato: risalvare aggiorna)
 - [x] Pagina di conferma con anteprima modificabile
 - [x] Categorie personali per utente: scelta/creazione nella conferma, filtro nell'elenco, export e API (migrazione `migrazioni/002_categorie.sql`)
+- [x] Elenco compatto (titolo, categoria, autore, bottoni Apri/Copia link/Modifica/Elimina)
+- [x] Paginazione con numero di reel per pagina personale (default 10, scelta in Account; migrazione `migrazioni/003_reel_per_pagina.sql`)
 - [ ] Compilazione automatica di titolo/autore/testo dal solo link (vedi "Lettura dal link")
 - [x] Elenco reel salvati, ricerca, export .txt/.csv
 - [x] Bookmarklet: legge titolo e didascalia (meta og:, titolo pagina o testo selezionato) e apre la conferma precompilata

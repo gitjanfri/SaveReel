@@ -36,6 +36,7 @@ Per ricreare il DB da zero: `docker compose down -v`.
 
 1. **Database**: in cPanel → *Database MySQL* crea database e utente, assegna *tutti i privilegi*.
    In *phpMyAdmin* seleziona il database e importa `schema.sql`.
+   Aggiornando un database esistente, importa invece i file in `migrazioni/` non ancora applicati, in ordine.
 2. **Primo utente**: in locale genera l'SQL e incollalo in phpMyAdmin (scheda *SQL*):
    `docker compose exec app php bin/crea-utente.php --email=tua@email.it --nome="Nome" --admin --sql`
 3. **File**: carica via File Manager/FTP la cartella del progetto **senza** `.git`, `docker/`,

@@ -14,6 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         revoca_token_api((int) $u['id']);
         flash('Token API revocato.');
         redirect('/account.php');
+    } elseif ($azione === 'preferenze') {
+        if (imposta_reel_per_pagina((int) $u['id'], (int) ($_POST['reel_per_pagina'] ?? 0))) {
+            flash('Preferenze salvate.');
+        } else {
+            flash('Valore non valido.', 'errore');
+        }
+        redirect('/account.php');
     } elseif ($azione === 'password') {
         $attuale = (string) ($_POST['attuale'] ?? '');
         $nuova = (string) ($_POST['nuova'] ?? '');
@@ -38,6 +45,21 @@ pagina_inizio('Account');
 <section class="card">
   <h1>Ciao <?= e($u['nome']) ?></h1>
   <p class="meta"><?= e($u['email']) ?> · ruolo <?= e($u['ruolo']) ?></p>
+</section>
+
+<section class="card" id="preferenze">
+  <h2>Preferenze</h2>
+  <form method="post" class="riga-form">
+    <?= csrf_campo() ?>
+    <input type="hidden" name="azione" value="preferenze">
+    <label for="reel_per_pagina">Reel per pagina nell'elenco</label>
+    <select name="reel_per_pagina" id="reel_per_pagina">
+      <?php foreach (REEL_PER_PAGINA_SCELTE as $n): ?>
+        <option value="<?= $n ?>"<?= $n === reel_per_pagina($u) ? ' selected' : '' ?>><?= $n ?></option>
+      <?php endforeach; ?>
+    </select>
+    <button type="submit">Salva</button>
+  </form>
 </section>
 
 <section class="card">
