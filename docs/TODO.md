@@ -67,26 +67,42 @@ Tabelle:
   lo stesso reel può essere salvato da utenti diversi, ma non duplicato dallo stesso utente.
 
 Multiutente in pratica:
-- Ogni utente vede/esporta solo i propri reel; il token del bookmarklet è personale (salvato come hash, rigenerabile).
+- Ogni utente vede/esporta solo i propri reel. Il bookmarklet usa la sessione del login (dati passati nel #frammento, non arrivano nei log); il token API personale (salvato come hash, rigenerabile) serve per integrazioni e Fase 2.
 - Password con `password_hash()`; sessioni sicure (cookie HttpOnly/Secure), protezione CSRF sui form.
 - Per ora un solo utente admin creato con uno script/SQL iniziale; pagina di gestione utenti più avanti.
 
 ### TODO
-- [ ] Verificare in cPanel: versione PHP attiva, creazione nuovo DB MySQL e utente, sottodominio
+- [x] Verificare in cPanel: PHP nativo 8.3, creazione nuovo DB MySQL e utente possibile, sottodominio possibile
+- [ ] Creare in cPanel sottodominio, DB MySQL e utente DB dedicati all'app
 - [x] Decidere se l'app è solo per me o multiutente → multiutente, per ora solo io
-- [ ] Ambiente di sviluppo locale con Docker compose (php:8.3-apache + mariadb) che replica l'hosting
-- [ ] `schema.sql` + connessione PDO + `config.php` fuori dal document root
-- [ ] Tabella `utenti` + script di creazione del primo utente admin
-- [ ] Login + token personale per il bookmarklet (ogni utente vede solo i propri reel)
+- [x] Ambiente di sviluppo locale con Docker compose (php:8.3-apache + mariadb) che replica l'hosting
+- [x] `schema.sql` + connessione PDO + `config.php` fuori dal document root
+- [x] Tabella `utenti` + script di creazione del primo utente admin
+- [x] Login + token API personale (ogni utente vede solo i propri reel)
 - [ ] (più avanti) Pagina admin per creare/disattivare utenti
-- [ ] API `POST/GET /api/reels` con normalizzazione URL (nessun duplicato: risalvare aggiorna)
-- [ ] Pagina di conferma con anteprima modificabile
-- [ ] Elenco reel salvati, ricerca, export .txt/.csv
-- [ ] Bookmarklet: legge titolo e didascalia dal DOM del reel e apre la conferma precompilata
-- [ ] Deploy su DominiOK (FTP/File Manager), HTTPS, backup del DB
-- [ ] Test con il reel d'esempio: salvataggio, risalvataggio senza duplicati, reel senza testo
+- [x] API `POST/GET /api/reels` con normalizzazione URL (nessun duplicato: risalvare aggiorna)
+- [x] Pagina di conferma con anteprima modificabile
+- [x] Categorie personali per utente: scelta/creazione nella conferma, filtro nell'elenco, export e API (migrazione `migrazioni/002_categorie.sql`)
+- [ ] Compilazione automatica di titolo/autore/testo dal solo link (vedi "Lettura dal link")
+- [x] Elenco reel salvati, ricerca, export .txt/.csv
+- [x] Bookmarklet: legge titolo e didascalia (meta og:, titolo pagina o testo selezionato) e apre la conferma precompilata
+- [x] Provato su reel vero in Chrome (03/11/2026): da loggato non ci sono meta og:, quindi il bookmarklet legge autore e didascalia completa dai dati JSON incorporati nella pagina (nodo con l'ID del reel); titolo = prima riga della didascalia
+- [ ] Verificare il caso di reel raggiunti scorrendo (i dati potrebbero non essere nella pagina iniziale → ricaricare con F5 o selezionare il testo)
+- [ ] Deploy su DominiOK (FTP/File Manager), HTTPS — istruzioni nel README
+- [ ] Backup periodico del DB (cPanel → Backup, o export phpMyAdmin)
+- [x] Test in locale: login, salvataggio, risalvataggio senza duplicati, reel senza testo, CSRF, isolamento utenti, API, export
+- [ ] Test con il reel d'esempio sul sito pubblicato
+- [ ] Passare /security-review prima della pubblicazione
 
 ---
+
+## Lettura dal link (titolo, autore, testo)
+
+Una richiesta anonima dal server riceve da Facebook una pagina vuota. Fingersi un crawler (es. facebookexternalhit) per aggirarlo è escluso.
+Strade legittime:
+- **Bookmarklet** (già fatto e provato): legge autore e didascalia completa dal reel aperto nel browser loggato.
+- **oEmbed ufficiale di Meta** (`oembed_video`): app Meta gratuita + funzione "oEmbed Read" (richiede verifica dell'app). Dà sicuramente l'autore; titolo/testo da verificare.
+- **yt-dlp con i cookie di un account** (Fase 2): legge come utente loggato; rischio Termini di Meta.
 
 ## Fase 2 – Lettura lato server con yt-dlp / Docker (DA VALUTARE DOPO) · stima ~1,5–2 giorni
 

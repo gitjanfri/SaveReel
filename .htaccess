@@ -1,0 +1,3 @@
+# Protezione: la document root deve essere public/. Se per errore fosse questa cartella,
+# nessun file (config.php compreso) viene servito.
+Require all denied

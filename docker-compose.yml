@@ -1,0 +1,26 @@
+# Solo per sviluppo locale: http://localhost:8080
+services:
+  app:
+    build: ./docker/php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: salvareel
+      MARIADB_USER: salvareel
+      MARIADB_PASSWORD: salvareel
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "3307:3306"
+
+volumes:
+  dbdata:
