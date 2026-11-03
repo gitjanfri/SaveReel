@@ -9,22 +9,48 @@ declare(strict_types=1);
 //   docker compose exec app php bin/crea-utente.php --email=io@esempio.it --nome="Gianfranco" --admin --sql
 //
 // La password viene chiesta in modo interattivo, oppure passata con --password=... (sconsigliato).
+//
+// Lunghezza minima della password, in ordine di priorità:
+//   --min=N                      opzione da riga di comando
+//   'password_min' in config.php la stessa usata dalla pagina Account
+//   10                           predefinita
+// In ogni caso non scende mai sotto 8.
 
 if (PHP_SAPI !== 'cli') {
     exit('Solo da riga di comando');
 }
 
-$o = getopt('', ['email:', 'nome:', 'password::', 'admin', 'sql']);
+const MIN_ASSOLUTO = 8;
+const MIN_PREDEFINITO = 10;
+
+$o = getopt('', ['email:', 'nome:', 'password::', 'admin', 'sql', 'min:']);
 $email = mb_strtolower(trim((string) ($o['email'] ?? '')));
 $nome = trim((string) ($o['nome'] ?? ''));
 if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $nome === '') {
-    fwrite(STDERR, "Uso: php bin/crea-utente.php --email=... --nome=... [--admin] [--sql] [--password=...]\n");
+    fwrite(STDERR, "Uso: php bin/crea-utente.php --email=... --nome=... [--admin] [--sql] [--min=N] [--password=...]\n");
     exit(1);
+}
+
+// config.php è facoltativo per --sql: se manca si usa il valore predefinito.
+$configFile = __DIR__ . '/../config.php';
+$cfg = is_file($configFile) ? (require $configFile) : [];
+if (isset($o['min'])) {
+    if (!ctype_digit((string) $o['min'])) {
+        fwrite(STDERR, "--min deve essere un numero intero.\n");
+        exit(1);
+    }
+    $min = (int) $o['min'];
+} else {
+    $min = (int) ($cfg['password_min'] ?? MIN_PREDEFINITO);
+}
+if ($min < MIN_ASSOLUTO) {
+    fwrite(STDERR, "Minimo richiesto $min troppo basso: uso " . MIN_ASSOLUTO . ".\n");
+    $min = MIN_ASSOLUTO;
 }
 
 $password = (string) ($o['password'] ?? '');
 if ($password === '') {
-    fwrite(STDOUT, 'Password (min. 10 caratteri): ');
+    fwrite(STDOUT, "Password (min. $min caratteri): ");
     if (DIRECTORY_SEPARATOR === '/') {
         shell_exec('stty -echo');
     }
@@ -34,8 +60,8 @@ if ($password === '') {
     }
     fwrite(STDOUT, "\n");
 }
-if (mb_strlen($password) < 10) {
-    fwrite(STDERR, "Password troppo corta (min. 10 caratteri).\n");
+if (mb_strlen($password) < $min) {
+    fwrite(STDERR, "Password troppo corta (min. $min caratteri).\n");
     exit(1);
 }
 

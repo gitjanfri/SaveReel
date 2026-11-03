@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute([$u['id']]);
         if (!password_verify($attuale, (string) $st->fetchColumn())) {
             flash('Password attuale non corretta.', 'errore');
-        } elseif (mb_strlen($nuova) < 10) {
-            flash('La nuova password deve avere almeno 10 caratteri.', 'errore');
+        } elseif (mb_strlen($nuova) < password_min()) {
+            flash('La nuova password deve avere almeno ' . password_min() . ' caratteri.', 'errore');
         } else {
             db()->prepare('UPDATE utenti SET password_hash = ? WHERE id = ?')
                 ->execute([password_hash($nuova, PASSWORD_DEFAULT), $u['id']]);
@@ -93,7 +93,7 @@ pagina_inizio('Account');
     <?= csrf_campo() ?>
     <input type="hidden" name="azione" value="password">
     <label>Password attuale <input type="password" name="attuale" required autocomplete="current-password"></label>
-    <label>Nuova password (min. 10 caratteri) <input type="password" name="nuova" required minlength="10" autocomplete="new-password"></label>
+    <label>Nuova password (min. <?= password_min() ?> caratteri) <input type="password" name="nuova" required minlength="<?= password_min() ?>" autocomplete="new-password"></label>
     <button type="submit">Aggiorna password</button>
   </form>
 </section>

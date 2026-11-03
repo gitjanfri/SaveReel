@@ -1,0 +1,32 @@
+# Esempio di PRODUZIONE su un VPS o sul PC di casa (non serve per DominiOK).
+# Avvio:  docker compose -f docker-compose.prod.yml up -d --build
+# Prima:  crea config.php (db.host = db) e il file .env con DB_PASSWORD e DB_ROOT_PASSWORD.
+# L'app ascolta solo su 127.0.0.1:8080: davanti serve un reverse proxy con HTTPS
+# (Caddy, Traefik, nginx) che passi l'header X-Forwarded-Proto: https.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/prod/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./config.php:/var/www/html/config.php:ro
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: salvareel
+      MARIADB_USER: salvareel
+      MARIADB_PASSWORD: ${DB_PASSWORD:?imposta DB_PASSWORD nel file .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?imposta DB_ROOT_PASSWORD nel file .env}
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+volumes:
+  dbdata:

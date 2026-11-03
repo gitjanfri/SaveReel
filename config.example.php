@@ -5,6 +5,7 @@
 return [
     'base_url' => 'http://localhost:8080',          // produzione: https://reel.facchinigianfranco.it
     'debug'    => true,                             // produzione: false
+    'password_min' => 10,                           // lunghezza minima password (mai sotto 8)
 
     'db' => [
         'host'     => 'db',                         // produzione: localhost

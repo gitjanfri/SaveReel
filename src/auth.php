@@ -105,3 +105,12 @@ function utente_da_token(): ?array
     $st->execute([hash('sha256', strtolower($token))]);
     return $st->fetch() ?: null;
 }
+
+/** Valore minimo assoluto, anche se config.php indica meno. */
+const PASSWORD_MIN_ASSOLUTO = 8;
+
+/** Lunghezza minima delle password: 'password_min' in config.php (default 10). */
+function password_min(): int
+{
+    return max(PASSWORD_MIN_ASSOLUTO, (int) config('password_min', 10));
+}

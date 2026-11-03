@@ -1,0 +1,34 @@
+# Equivalente nginx dei due .htaccess (per server senza Apache).
+# Sostituisci il dominio, i percorsi e il socket PHP-FPM con quelli del tuo server.
+
+server {
+    listen 80;
+    server_name reel.esempio.it;
+    return 301 https://$host$request_uri;          # forza HTTPS
+}
+
+server {
+    listen 443 ssl http2;
+    server_name reel.esempio.it;
+    ssl_certificate     /etc/letsencrypt/live/reel.esempio.it/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/reel.esempio.it/privkey.pem;
+
+    root  /srv/salvareel/public;                   # SOLO public/, mai la cartella del progetto
+    index index.php;
+    autoindex off;                                  # = Options -Indexes
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;                        # niente esecuzione di file inesistenti
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTPS on;
+        fastcgi_param HTTP_AUTHORIZATION $http_authorization;   # serve all'API (token)
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\. { deny all; }                    # file nascosti (.htaccess, .git, ...)
+}

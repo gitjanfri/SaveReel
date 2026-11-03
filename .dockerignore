@@ -1,0 +1,7 @@
+.git
+.vscode
+docs
+docker
+docker-compose*.yml
+config.php
+*.md
