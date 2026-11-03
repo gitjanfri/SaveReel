@@ -63,6 +63,6 @@ pagina_inizio($reel ? 'Modifica reel' : 'Salva reel');
     </div>
   </form>
 </section>
-<script src="/assets/conferma.js"></script>
+<script src="<?= e(asset('conferma.js')) ?>"></script>
 <?php
 pagina_fine();

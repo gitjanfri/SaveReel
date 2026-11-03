@@ -34,6 +34,6 @@ pagina_inizio('Accedi');
     <button type="submit">Accedi</button>
   </form>
 </section>
-<script src="/assets/login.js"></script>
+<script src="<?= e(asset('login.js')) ?>"></script>
 <?php
 pagina_fine();

@@ -56,30 +56,40 @@ pagina_inizio('I miei reel');
   </section>
 <?php endif; ?>
 
+<?php if ($reels): ?>
+<ul class="lista-reel card">
 <?php foreach ($reels as $r): ?>
-  <article class="card reel">
-    <h2><a href="<?= e($r['url']) ?>" target="_blank" rel="noopener noreferrer"><?= e($r['titolo']) ?></a></h2>
-    <p class="meta">
-      <?php if ($r['categoria']): ?><a class="categoria" href="/?cat=<?= (int) $r['categoria_id'] ?>"><?= e($r['categoria']) ?></a><?php endif; ?>
-      <?= $r['autore'] ? e($r['autore']) . ' · ' : '' ?>
-      salvato il <?= e(date('d/m/Y H:i', strtotime($r['creato_il']))) ?>
-    </p>
-    <?php if ($r['testo']): ?><p class="testo"><?= nl2br(e($r['testo'])) ?></p><?php endif; ?>
-    <p class="link"><a href="<?= e($r['url']) ?>" target="_blank" rel="noopener noreferrer"><?= e($r['url']) ?></a></p>
-    <div class="azioni">
-      <a href="/conferma.php?id=<?= (int) $r['id'] ?>" class="bottone secondario">Modifica</a>
+  <li class="riga-reel">
+    <div class="info">
+      <a class="titolo" href="<?= e($r['url']) ?>" target="_blank" rel="noopener noreferrer"
+         title="Apri il reel su Facebook"><?= e($r['titolo']) ?></a>
+      <div class="dettagli">
+        <?php if ($r['categoria']): ?>
+          <a class="categoria" href="/?cat=<?= (int) $r['categoria_id'] ?>"><?= e($r['categoria']) ?></a>
+        <?php else: ?>
+          <span class="categoria vuota">Senza categoria</span>
+        <?php endif; ?>
+        <span class="autore"><?= $r['autore'] ? e($r['autore']) : '<em>autore sconosciuto</em>' ?></span>
+      </div>
+    </div>
+    <div class="servizio">
+      <a href="<?= e($r['url']) ?>" target="_blank" rel="noopener noreferrer" class="bottone piccolo secondario">Apri</a>
+      <button type="button" class="piccolo secondario copia-link" data-url="<?= e($r['url']) ?>">Copia link</button>
+      <a href="/conferma.php?id=<?= (int) $r['id'] ?>" class="bottone piccolo secondario">Modifica</a>
       <form method="post" class="inline conferma-elimina">
         <?= csrf_campo() ?>
-        <button name="elimina" value="<?= (int) $r['id'] ?>" class="pericolo">Elimina</button>
+        <button name="elimina" value="<?= (int) $r['id'] ?>" class="piccolo pericolo">Elimina</button>
       </form>
     </div>
-  </article>
+  </li>
 <?php endforeach; ?>
+</ul>
+<?php endif; ?>
 
 <nav class="paginazione">
   <?php if ($pagina > 1): ?><a href="?<?= qs(['p' => $pagina - 1]) ?>">← Precedenti</a><?php endif; ?>
   <?php if ($altre): ?><a href="?<?= qs(['p' => $pagina + 1]) ?>">Successivi →</a><?php endif; ?>
 </nav>
-<script src="/assets/elenco.js"></script>
+<script src="<?= e(asset('elenco.js')) ?>"></script>
 <?php
 pagina_fine();

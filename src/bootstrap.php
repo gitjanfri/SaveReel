@@ -123,13 +123,20 @@ function flash_html(): string
 
 // ---- Layout ----
 
+/** URL di un file in public/assets con versione (data di modifica): il browser ricarica dopo ogni aggiornamento. */
+function asset(string $file): string
+{
+    $percorso = __DIR__ . '/../public/assets/' . $file;
+    return '/assets/' . $file . (is_file($percorso) ? '?v=' . filemtime($percorso) : '');
+}
+
 function pagina_inizio(string $titolo): void
 {
     $u = utente_corrente();
     echo '<!doctype html><html lang="it"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<title>' . e($titolo) . ' · Salva Reel</title>'
-        . '<link rel="stylesheet" href="/assets/style.css"></head><body>'
+        . '<link rel="stylesheet" href="' . e(asset('style.css')) . '"></head><body>'
         . '<header class="top"><a class="logo" href="/">Salva Reel</a>';
     if ($u) {
         echo '<nav><a href="/">I miei reel</a><a href="/conferma.php">Nuovo</a>'
