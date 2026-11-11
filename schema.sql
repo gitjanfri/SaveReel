@@ -10,9 +10,22 @@ CREATE TABLE IF NOT EXISTS utenti (
     token_api_hash  CHAR(64) NULL,
     reel_per_pagina SMALLINT UNSIGNED NOT NULL DEFAULT 10,
     attivo          TINYINT(1) NOT NULL DEFAULT 1,
+    email_verificata_il DATETIME NULL,          -- NULL = iscrizione in attesa di conferma
+    verifica_token_hash CHAR(64) NULL,          -- sha256 del token inviato per email
+    verifica_scadenza   DATETIME NULL,
     creato_il       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_utenti_email (email),
-    UNIQUE KEY uq_utenti_token (token_api_hash)
+    UNIQUE KEY uq_utenti_token (token_api_hash),
+    UNIQUE KEY uq_utenti_verifica (verifica_token_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Limite dei tentativi (iscrizioni, invio email) per IP o email, conservati come sha256.
+CREATE TABLE IF NOT EXISTS tentativi (
+    id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    azione     VARCHAR(30) NOT NULL,
+    chiave     CHAR(64) NOT NULL,
+    creato_il  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY ix_tentativi (azione, chiave, creato_il)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS categorie (

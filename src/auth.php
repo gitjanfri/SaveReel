@@ -12,7 +12,8 @@ function utente_corrente(): ?array
     $utente = null;
     $id = $_SESSION['utente_id'] ?? null;
     if ($id) {
-        $st = db()->prepare('SELECT id, email, nome, ruolo, reel_per_pagina FROM utenti WHERE id = ? AND attivo = 1');
+        $st = db()->prepare('SELECT id, email, nome, ruolo, reel_per_pagina FROM utenti
+                              WHERE id = ? AND attivo = 1 AND email_verificata_il IS NOT NULL');
         $st->execute([$id]);
         $utente = $st->fetch() ?: null;
         if (!$utente) {
@@ -32,16 +33,27 @@ function richiedi_login(): array
     return $u;
 }
 
-function login(string $email, string $password): bool
+const LOGIN_OK = 'ok';
+const LOGIN_ERRATO = 'errato';
+const LOGIN_DA_CONFERMARE = 'da_confermare';
+
+/** Esito: LOGIN_OK, LOGIN_ERRATO, oppure LOGIN_DA_CONFERMARE (password giusta ma email non ancora confermata). */
+function login(string $email, string $password): string
 {
-    $st = db()->prepare('SELECT id, password_hash FROM utenti WHERE email = ? AND attivo = 1');
+    $st = db()->prepare('SELECT id, password_hash, email_verificata_il FROM utenti WHERE email = ? AND attivo = 1');
     $st->execute([mb_strtolower(trim($email))]);
     $row = $st->fetch();
     // password_verify anche se l'utente non esiste, per tempi di risposta uniformi
     $hash = $row['password_hash'] ?? '$2y$10$usesomesillystringforsaltusesomesillystringfore.abcdefghijk';
     if (!password_verify($password, $hash) || !$row) {
         sleep(1); // rallenta i tentativi a forza bruta
-        return false;
+        return LOGIN_ERRATO;
+    }
+    // Solo chi conosce la password scopre che l'account attende conferma
+    if ($row['email_verificata_il'] === null) {
+        // Permette di chiedere un nuovo link dalla pagina di login senza reinserire la password
+        $_SESSION['da_confermare_id'] = (int) $row['id'];
+        return LOGIN_DA_CONFERMARE;
     }
     if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) {
         db()->prepare('UPDATE utenti SET password_hash = ? WHERE id = ?')
@@ -49,7 +61,7 @@ function login(string $email, string $password): bool
     }
     session_regenerate_id(true);
     $_SESSION['utente_id'] = (int) $row['id'];
-    return true;
+    return LOGIN_OK;
 }
 
 function logout(): void
@@ -101,7 +113,8 @@ function utente_da_token(): ?array
     if ($token === '') {
         return null;
     }
-    $st = db()->prepare('SELECT id, email, nome, ruolo FROM utenti WHERE token_api_hash = ? AND attivo = 1');
+    $st = db()->prepare('SELECT id, email, nome, ruolo FROM utenti
+                         WHERE token_api_hash = ? AND attivo = 1 AND email_verificata_il IS NOT NULL');
     $st->execute([hash('sha256', strtolower($token))]);
     return $st->fetch() ?: null;
 }

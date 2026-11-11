@@ -16,6 +16,7 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/reel.php';
+require_once __DIR__ . '/iscrizione.php';
 
 function config(string $key, mixed $default = null): mixed
 {
@@ -139,10 +140,14 @@ function pagina_inizio(string $titolo): void
         . '<link rel="stylesheet" href="' . e(asset('style.css')) . '"></head><body>'
         . '<header class="top"><a class="logo" href="/">Salva Reel</a>';
     if ($u) {
-        echo '<nav><a href="/">I miei reel</a><a href="/conferma.php">Nuovo</a>'
+        echo '<nav><a href="/elenco.php">I miei reel</a><a href="/conferma.php">Nuovo</a>'
             . '<a href="/account.php">Account</a>'
             . '<form method="post" action="/logout.php" class="inline">' . csrf_campo()
             . '<button class="link">Esci</button></form></nav>';
+    } else {
+        echo '<nav><a href="/login.php">Accedi</a>'
+            . (iscrizioni_aperte() ? '<a href="/iscrizione.php" class="bottone piccolo">Iscriviti</a>' : '')
+            . '</nav>';
     }
     echo '</header><main>' . flash_html();
 }

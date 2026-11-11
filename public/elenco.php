@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['elimina'])) {
     if (elimina_reel((int) $u['id'], (int) $_POST['elimina'])) {
         flash('Reel eliminato.');
     }
-    redirect('/');
+    redirect('/elenco.php');
 }
 
 $q = trim((string) ($_GET['q'] ?? ''));
@@ -65,7 +65,7 @@ pagina_inizio('I miei reel');
          title="Apri il reel su Facebook"><?= e($r['titolo']) ?></a>
       <div class="dettagli">
         <?php if ($r['categoria']): ?>
-          <a class="categoria" href="/?cat=<?= (int) $r['categoria_id'] ?>"><?= e($r['categoria']) ?></a>
+          <a class="categoria" href="/elenco.php?cat=<?= (int) $r['categoria_id'] ?>"><?= e($r['categoria']) ?></a>
         <?php else: ?>
           <span class="categoria vuota">Senza categoria</span>
         <?php endif; ?>

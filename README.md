@@ -3,6 +3,8 @@
 Web app (PHP 8.3 + MySQL) per salvare **titolo, testo e link** dei reel Facebook.
 Da PC: un pulsante nei preferiti legge i dati dal reel aperto, apre una pagina di conferma
 modificabile e salva nel database. Multiutente: ogni utente vede solo i propri reel.
+Il pulsante apre sempre la stessa scheda (nome `salvareel`): se è già aperta, anche sull'elenco, la riusa.
+Funziona per le schede aperte dal pulsante; una scheda dell'app aperta a mano non viene riconosciuta dal browser.
 
 Produzione: https://reel.facchinigianfranco.it · Piano e cose da fare: [docs/TODO.md](docs/TODO.md)
 
@@ -10,7 +12,9 @@ Produzione: https://reel.facchinigianfranco.it · Piano e cose da fare: [docs/TO
 
 ```
 public/          document root (pagine, API, assets)
-  index.php      elenco, ricerca, eliminazione
+  index.php      presentazione del servizio (chi ha già fatto l'accesso va all'elenco)
+  iscrizione.php iscrizione con conferma via email · verifica.php attivazione account
+  elenco.php     elenco, ricerca, eliminazione
   conferma.php   anteprima modificabile + salvataggio (nuovo o ?id= per modificare)
   account.php    pulsante "Salva reel", token API, cambio password
   export.php     export .txt / .csv
@@ -91,7 +95,11 @@ e adattare `base_url` e credenziali in `config.php`.
 2. Primo utente con `--sql` (se il piano non include SSH/Terminale) e incolla l'SQL nella scheda *SQL* di phpMyAdmin.
 3. File Manager/FTP: carica il progetto in `~/salvareel/` (fuori da `public_html`).
 4. cPanel → *Domini*: document root di `reel.facchinigianfranco.it` = `~/salvareel/public`; attiva AutoSSL.
-5. `~/salvareel/config.php` con `base_url = https://reel.facchinigianfranco.it`, `debug = false`, `host = localhost`.
+5. `~/salvareel/config.php` con `base_url = https://reel.facchinigianfranco.it`, `debug = false`, `host = localhost`,
+   `'mail' => ['modo' => 'mail', 'mittente' => 'noreply@facchinigianfranco.it']`
+   (vedi [Email in produzione](#email-in-produzione): inoltro per il mittente, SPF e DKIM).
+6. Database esistente: esegui in phpMyAdmin le migrazioni di `migrazioni/` non ancora applicate
+   (per l'iscrizione: `004_iscrizione.sql`).
 
 ### Esempio: container Docker (VPS, PC di casa, cloud)
 
@@ -117,3 +125,46 @@ GET  /api/reels.php?q=testo&categoria=nome Authorization: Bearer <token>
 POST /api/reels.php                {"url": "...", "titolo": "...", "testo": "...", "autore": "...", "categoria": "...", "fonte": "server"}
 ```
 Il token si genera nella pagina *Account* (viene mostrato una sola volta).
+
+## Iscrizione e sicurezza
+
+Chiunque può iscriversi da `/iscrizione.php` (si disattiva con `'iscrizioni_aperte' => false`).
+
+- Il modulo risponde sempre "controlla la tua email": non rivela se un indirizzo è già registrato.
+  Se l'account esiste già, il titolare riceve solo un avviso.
+- L'account si attiva aprendo il link ricevuto (valido 24 ore) **e** inserendo la password scelta:
+  chi iscrive l'email di un altro non può attivarla, e i filtri antispam che aprono i link non attivano nulla.
+- Email non arrivata: chi accede con email e password di un account non confermato vede il pulsante
+  **"Reinvia l'email di conferma"** (nuovo link, il precedente smette di valere). Serve la password,
+  quindi non rivela nulla a chi non è il titolare.
+- Limiti: 5 iscrizioni l'ora per IP, 3 email l'ora per indirizzo (iscrizioni e reinvii insieme),
+  10 tentativi di conferma ogni 15 minuti per IP.
+- Contro i bot: campo trappola nascosto e tempo minimo di compilazione (3 secondi), senza CAPTCHA.
+- Gli utenti creati con `bin/crea-utente.php` sono già verificati.
+- Il codice è in `src/iscrizione.php`: `iscrizione_registra()` decide cosa inviare, `invia_email()` lo spedisce.
+  Se `mail()` fallisce l'utente vede comunque lo stesso messaggio, ma l'errore finisce nel log di PHP
+  (cPanel → *Errors* o file `error_log`).
+
+### Email in produzione
+
+- Il mittente (`mittente` in `config.php`) non deve per forza esistere per inviare, ma conviene crearlo
+  almeno come **inoltro** verso la tua casella (cPanel → *Email* → *Forwarders*): lì tornano le email
+  non recapitate e le eventuali risposte, e alcuni server rifiutano mittenti inesistenti.
+- cPanel → *Email Deliverability*: **SPF e DKIM** del dominio devono risultare "Valid" (altrimenti "Repair"),
+  o le email di conferma finiscono facilmente nello spam.
+
+### Provare l'iscrizione in locale
+
+In locale non c'è un server di posta: in `config.php` usa `'mail' => ['modo' => 'log']`
+(con `'mail'` le email vanno perse con `sendmail: not found` nel log del container).
+
+1. http://localhost:8080/iscrizione.php → compila e invia (aspetta almeno 3 secondi, o sembri un bot).
+2. Il messaggio è in fondo a `var/mail.log`; il link si trova anche con
+   `grep -o "http://localhost:8080/verifica.php?t=[a-f0-9]*" var/mail.log | tail -1`.
+3. Apri il link, inserisci la password scelta → account attivo, si apre la pagina *Account*.
+4. Per provare il reinvio: prima di confermare accedi da `/login.php` e clicca "Reinvia l'email di conferma".
+
+Se compare "Troppi tentativi", azzera i limiti del DB locale:
+```
+docker compose exec -T db mariadb -usalvareel -psalvareel salvareel -e "DELETE FROM tentativi"
+```

@@ -222,3 +222,4 @@ __marimo__/
 # Salva Reel (PHP)
 /config.php
 /vendor/
+/var/

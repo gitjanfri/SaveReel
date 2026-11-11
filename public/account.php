@@ -71,6 +71,8 @@ pagina_inizio('Account');
     <li>Se vuoi un testo preciso, <strong>selezionalo</strong> col mouse prima del clic.</li>
     <li>Clicca "Salva reel" nei preferiti: si apre la pagina di conferma, correggi e conferma.</li>
   </ol>
+  <p class="nota">I clic successivi riusano la stessa scheda di Salva Reel, invece di aprirne una nuova ogni volta.
+    Se hai una versione precedente del pulsante, eliminala dai preferiti e trascina di nuovo questa.</p>
   <p class="nota">Se la barra dei preferiti non è visibile: Ctrl+Maiusc+B (Chrome/Edge).</p>
 </section>
 

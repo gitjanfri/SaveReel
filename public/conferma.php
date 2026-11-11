@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         [, $creato] = salva_reel((int) $u['id'], $dati, $reel['fonte'] ?? $fonte);
         flash($creato ? 'Reel salvato.' : 'Reel già presente: aggiornato.');
-        redirect('/');
+        redirect('/elenco.php');
     } catch (InvalidArgumentException $ex) {
         $errore = $ex->getMessage();
     }
@@ -59,7 +59,7 @@ pagina_inizio($reel ? 'Modifica reel' : 'Salva reel');
       <textarea name="testo" id="testo" rows="10"><?= e($dati['testo']) ?></textarea></label>
     <div class="azioni">
       <button type="submit">Conferma e salva</button>
-      <a href="/" class="bottone secondario">Annulla</a>
+      <a href="/elenco.php" class="bottone secondario">Annulla</a>
     </div>
   </form>
 </section>

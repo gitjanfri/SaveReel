@@ -79,7 +79,10 @@ Multiutente in pratica:
 - [x] `schema.sql` + connessione PDO + `config.php` fuori dal document root
 - [x] Tabella `utenti` + script di creazione del primo utente admin
 - [x] Login + token API personale (ogni utente vede solo i propri reel)
+- [x] Iscrizione pubblica con conferma email (password richiesta alla conferma), limiti per IP/email, campo trappola; chiudibile con `iscrizioni_aperte`; reinvio del link dal login (migrazione `migrazioni/004_iscrizione.sql`)
+- [ ] In produzione: inoltro per `noreply@facchinigianfranco.it`, SPF/DKIM "Valid" in *Email Deliverability*, provare un'iscrizione vera (anche verso Gmail/Outlook per lo spam)
 - [ ] (più avanti) Pagina admin per creare/disattivare utenti
+- [ ] Pagina privacy/informativa per gli iscritti (GDPR) e "password dimenticata"
 - [x] API `POST/GET /api/reels` con normalizzazione URL (nessun duplicato: risalvare aggiorna)
 - [x] Pagina di conferma con anteprima modificabile
 - [x] Categorie personali per utente: scelta/creazione nella conferma, filtro nell'elenco, export e API (migrazione `migrazioni/002_categorie.sql`)

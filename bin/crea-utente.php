@@ -70,14 +70,14 @@ $ruolo = isset($o['admin']) ? 'admin' : 'utente';
 
 if (isset($o['sql'])) {
     $q = fn(string $s) => "'" . str_replace(["\\", "'"], ["\\\\", "''"], $s) . "'";
-    echo "INSERT INTO utenti (email, nome, password_hash, ruolo) VALUES ({$q($email)}, {$q($nome)}, {$q($hash)}, {$q($ruolo)});\n";
+    echo "INSERT INTO utenti (email, nome, password_hash, ruolo, email_verificata_il) VALUES ({$q($email)}, {$q($nome)}, {$q($hash)}, {$q($ruolo)}, NOW());\n";
     exit(0);
 }
 
 $_SERVER['REQUEST_METHOD'] = 'CLI';
 require __DIR__ . '/../src/bootstrap.php';
 try {
-    db()->prepare('INSERT INTO utenti (email, nome, password_hash, ruolo) VALUES (?, ?, ?, ?)')
+    db()->prepare('INSERT INTO utenti (email, nome, password_hash, ruolo, email_verificata_il) VALUES (?, ?, ?, ?, NOW())')
         ->execute([$email, $nome, $hash, $ruolo]);
     echo "Utente creato: $email ($ruolo)\n";
 } catch (PDOException $ex) {

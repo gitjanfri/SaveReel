@@ -249,8 +249,11 @@ if(!titolo){titolo=document.title.replace(/^\(\d+\)\s*/,'').replace(/\s*\|\s*Fac
 if(/^facebook$/i.test(titolo))titolo=autore?'Reel di '+autore:''}
 if(titolo.length>120)titolo=titolo.slice(0,117)+'...';
 const p=new URLSearchParams({url:location.href,titolo:titolo,testo:testo,autore:autore});
-window.open('__BASE__/conferma.php#'+p.toString(),'_blank');})();
+const w=window.open('__BASE__/conferma.php?n='+Date.now()+'#'+p.toString(),'salvareel');if(w)w.focus();})();
 JS;
+    // La scheda si chiama "salvareel": i clic successivi riusano quella già aperta (anche se ora mostra
+    // l'elenco) invece di aprirne una nuova. ?n= rende ogni URL diverso, così la pagina si ricarica
+    // davvero (cambiando solo il #frammento il browser non la ricaricherebbe).
     $js = str_replace(["\n", '__BASE__'], ['', $base], $js);
     return 'javascript:' . rawurlencode($js);
 }
